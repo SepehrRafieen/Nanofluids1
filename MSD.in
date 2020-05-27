@@ -1,0 +1,81 @@
+echo both 
+package omp 4 
+suffix omp 
+units real 
+atom_style full 
+pair_style lj/class2/coul/cut 9.0 
+bond_style class2 
+angle_style class2
+dihedral_style class2
+improper_style class2
+read_data TG_mixture-3.data
+#minimize 0.001 0.001 1000 10000 
+#########################################
+
+fix deform all deform 1 x final 0.0 100.0 z final 0.0 80.0 units box 
+fix nve0 all nve 
+timestep 1 
+thermo 1000 
+thermo_style custom step temp ke pe etotal density 
+run 100000
+unfix deform 
+unfix nve0 
+reset_timestep 0 
+############################################
+
+velocity all create 200.0 12345678 mom yes rot yes dist gaussian
+fix npt1 all npt temp 200 200 100 iso 1.0 1.0 1000.0 
+compute pe all pe 
+compute ke all ke 
+compute T1 all temp 
+compute msd all msd
+dump 1 all atom 10000 T-MSD-1.atom 
+variable msd equal c-msd[4]
+variable twopoint equal c_msd[4]/6/(step*dt+1.0e-6) 
+fix vector1 all vector 100 c_msd[4]
+variable fitslope equal slope (f_vector1)/6/100*dt
+
+#v_point=diffusion coefficient 
+#v_fitslope=diffusion coefficient
+
+thermo 1000 
+thermo_style custom step temp ke pe etotal density v_msd v_twopoint v_fitslope lx ly lz 
+timestep 1 
+run 1000000
+restart 1000000 T-MSD-1.restart 
+undump 1 
+unfix npt1 
+######################################
+fix npt2 all npt temp 200 450 100 iso 1.0 1.0 1000.0 
+dump 2 all atom 50000 T-MSd-2.atom 
+timestep 1 
+run 5000000
+restart 5000000 T-MSD-2.restart 
+undump 2
+unfix npt2 
+#####################################
+fix npt3 all npt temp 450 450 100 iso 1.0 1.0 1000.0 
+dump 3 all atom 50000 T-MSd-3.atom 
+timestep 1 
+run 5000000
+restart 5000000 T-MSD-3.restart 
+undump 3
+unfix npt3 
+#####################################
+fix npt4 all npt temp 450 200 100 iso 1.0 1.0 1000.0 
+dump 4 all atom 50000 T-MSd-4.atom 
+timestep 1 
+run 5000000
+restart 5000000 T-MSD-4.restart 
+undump 4
+unfix npt4 
+#####################################
+fix npt5 all npt temp 200 200 100 iso 1.0 1.0 1000.0 
+dump 5 all atom 50000 T-MSd-5.atom 
+timestep 1 
+run 5000000
+restart 5000000 T-MSD-5.restart 
+undump 5
+unfix npt5 
+write_data T-MSD.data
+#########

@@ -1,0 +1,54 @@
+echo both 
+package omp 4 
+suffix omp  
+units real 
+atom_style full 
+pair_style lj/class2/coul/cut 9.0
+bond_style class2 
+angle_style class2 
+dihedral_style class2  
+improper_style class2 
+read_data T-in200K.data 
+variable T equal 273.0 
+#Equilibrium with NPT		 
+fix npt all npt temp $T $T 25.0 iso 1.0 1.0 250.0 
+velocity all create $T 12345678 dist gaussian 
+dump 1 all atom 10000 T$T-1.atom 
+thermo 1000 
+thermo_style custom step temp press ke pe etotal enthalpy lx ly lz density 
+timestep 0.25 
+run 1000000 
+undump 1 
+unfix npt 
+write_restart T$T-1.restart 
+#Cv and MSD calculation using NVT, 
+reset_timestep 0 
+log  log-T.lammps 
+fix nvt all nvt temp $T $T 25.0  
+compute pe all pe 
+compute ke all ke 
+compute temp all temp 
+compute msd all msd 
+variable msd equal c_msd[4] 
+variable twopoint equal c_msd[4]/6/(step*dt+1.0e-6)
+fix vector all vector 100 c_msd[4]
+variable fitslope equal slope (f-vector1)/6/(100*dt) 
+compute rdf all rdf 100 
+fix avetimemsd all ave/time 1 1000 1000 c_msd[4] file MSD$T.txt mode scalar 
+fix avetimeedf all ave/time 1 1 4000000 c_rdf[*] file RDF$T.txt mode vector 
+compute rdf1 all rdf 100 1 1 
+compute rdf2 all rdf 100 2 2 
+compute rdf3 all rdf 100 3 3  
+compute rdf4 all rdf 100 2 1 
+compute rdf5 all rdf 100 3 1 
+compute rdf6 all rdf 100 3 2 
+fix avetimerdfnn all ave/time 1 1 400000 c_rdf1[*] c_rdf2[*] c_rdf3[*] c_rdf4[*] c_rdf5[*] & 
+c_rdf6[*] file RDFNN$T.txt 
+fix avetimerdfHH all ave/time 1 1 400000 c_rdf3[*] file RDF-HH $T.txt mode vector 
+dump 2 all atom 40000 T$T-2.atom 
+thermo 1000 
+thermo_style custom step temp ke pe etotal density v_msd v_twopoint v_fileslope lx ly lz 
+timestep 0.25 
+run 4000000
+write_restart T$T-end.restart 
+###########

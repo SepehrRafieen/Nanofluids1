@@ -1,0 +1,29 @@
+
+# Tetracosane 
+
+#tolerance 2.0 
+#filetype pdb 
+#output Tetracosane1.pdb 
+#structure  Tetracosane.pdb 
+#number 94 
+#inside box 0 0 0 120 10 47 
+#end structure 
+#tolerance 2.0 
+#filetype pdb 
+#output Tetracosane2.pdb 
+#structure  Tetracosane.pdb 
+#number 94 
+#inside box 0 0 54.4 120 10 101.4 
+#end structure 
+
+tolerance 2.0
+filetype pdb
+output Tetracosane1and2.pdb
+structure Tetracosane1.pdb
+number 1 
+fixed 0 0 0 0 0 0
+end structure 
+structure Tetracosne2.pdb
+number 1 
+fixed 0 0 0 0 0 0
+end structure
